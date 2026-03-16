@@ -2,8 +2,8 @@ name: generate-snake
 
 on:
   schedule:
-    # Runs every 12 hours
-    - cron: "0 */12 * * *"
+    # Runs every 30 minutes
+    - cron: "*/30 * * *"
   workflow_dispatch:
   push:
     branches:
@@ -22,6 +22,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          # Fetches full history so we can push back to main safely
+          fetch-depth: 0
 
       - name: Get current time
         run: echo "NOW=$(date +%s)" >> $GITHUB_ENV
@@ -38,14 +41,21 @@ jobs:
 
       - name: Update README with new timestamp
         run: |
+          # Use sed to update the timestamp in the README
           sed -i "s|github-snake-dark.svg\(\?time=[0-9]*\)\?|github-snake-dark.svg?time=${{ env.NOW }}|g" README.md
           sed -i "s|github-snake.svg\(\?time=[0-9]*\)\?|github-snake.svg?time=${{ env.NOW }}|g" README.md
           
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add README.md
-          git commit -m "docs: update snake timestamp to ${{ env.NOW }}" || echo "No changes to commit"
-          git push origin main
+          
+          # Only commit and push if there are actual changes
+          if git diff --staged --quiet; then
+            echo "No changes to README"
+          else
+            git commit -m "docs: update snake timestamp to ${{ env.NOW }}"
+            git push origin main
+          fi
 
       - name: push to output branch
         uses: crazy-max/ghaction-github-pages@v5
