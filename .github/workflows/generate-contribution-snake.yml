@@ -21,9 +21,12 @@ jobs:
     permissions:
       contents: write
 
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
     steps:
       - name: 📥 Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -56,7 +59,7 @@ jobs:
           echo "✅ Both SVGs generated successfully"
 
       - name: 🚀 Deploy SVGs to output branch
-        uses: crazy-max/ghaction-github-pages@v4
+        uses: crazy-max/ghaction-github-pages@v5
         with:
           target_branch: output
           build_dir: dist
@@ -69,27 +72,50 @@ jobs:
         env:
           USERNAME: ${{ github.repository_owner }}
         run: |
-          NOW=$(date +%s)
-          echo "Timestamp : $NOW"
-          echo "Username  : $USERNAME"
+          python3 << 'EOF'
+          import os
+          import re
+          import time
 
-          BASE_URL="https://raw.githubusercontent.com/$USERNAME/$USERNAME/output"
+          username = os.environ["USERNAME"]
+          now = int(time.time())
+          base = f"https://raw.githubusercontent.com/{username}/{username}/output"
+          light = f"{base}/github-snake.svg?t={now}"
+          dark  = f"{base}/github-snake-dark.svg?t={now}"
 
-          LIGHT_URL="$BASE_URL/github-snake.svg?t=$NOW"
-          DARK_URL="$BASE_URL/github-snake-dark.svg?t=$NOW"
+          block = f"""<picture>
+            <source media="(prefers-color-scheme: dark)" srcset="{dark}" />
+            <source media="(prefers-color-scheme: light)" srcset="{light}" />
+            <img alt="GitHub contribution snake animation" src="{light}" />
+          </picture>"""
 
-          # Proper <picture> tag — dark mode gets dark SVG, light mode gets light SVG
-          SNAKE_BLOCK='<picture>\n  <source media="(prefers-color-scheme: dark)" srcset="'"$DARK_URL"'" />\n  <source media="(prefers-color-scheme: light)" srcset="'"$LIGHT_URL"'" />\n  <img alt="GitHub contribution snake animation" src="'"$LIGHT_URL"'" />\n</picture>'
+          readme_path = "README.md"
 
-          if grep -q "github-snake" README.md; then
-            # Replace the existing <picture> block
-            perl -i -0777 -pe 's|<picture>.*?</picture>|'"$SNAKE_BLOCK"'|gs' README.md
-          else
-            # Prepend to the very top of README
-            CURRENT=$(cat README.md)
-            printf "$SNAKE_BLOCK\n\n$CURRENT" > README.md
-          fi
+          # Read existing README or start fresh
+          if os.path.exists(readme_path):
+              with open(readme_path, "r", encoding="utf-8") as f:
+                  content = f.read()
+          else:
+              content = ""
 
+          # Replace existing picture block if present, otherwise prepend
+          pattern = re.compile(r"<picture>.*?</picture>", re.DOTALL)
+
+          if pattern.search(content):
+              updated = pattern.sub(block, content)
+              print(f"✅ Replaced existing snake block with t={now}")
+          else:
+              updated = block + "\n\n" + content
+              print(f"✅ Prepended new snake block with t={now}")
+
+          with open(readme_path, "w", encoding="utf-8") as f:
+              f.write(updated)
+
+          print("✅ README.md written successfully")
+          EOF
+
+      - name: 📝 Commit README changes
+        run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add README.md
@@ -97,6 +123,6 @@ jobs:
           if git diff --staged --quiet; then
             echo "No README changes, skipping commit."
           else
-            git commit -m "chore: update snake and bust cache [t=$NOW]"
+            git commit -m "chore: update snake and bust cache [t=$(date +%s)]"
             git push origin main
           fi
