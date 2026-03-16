@@ -23,7 +23,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          # Fetches full history so we can push back to main safely
           fetch-depth: 0
 
       - name: Get current time
@@ -41,7 +40,7 @@ jobs:
 
       - name: Update README with new timestamp
         run: |
-          # Use sed to update the timestamp in the README
+          # Finds the snake URLs and updates the ?time= parameter
           sed -i "s|github-snake-dark.svg\(\?time=[0-9]*\)\?|github-snake-dark.svg?time=${{ env.NOW }}|g" README.md
           sed -i "s|github-snake.svg\(\?time=[0-9]*\)\?|github-snake.svg?time=${{ env.NOW }}|g" README.md
           
@@ -49,7 +48,7 @@ jobs:
           git config user.email github-actions@github.com
           git add README.md
           
-          # Only commit and push if there are actual changes
+          # Only commits and pushes if the file actually changed
           if git diff --staged --quiet; then
             echo "No changes to README"
           else
