@@ -1,9 +1,9 @@
-name: 🐍 Contribution Snake
+name: 🐍 Generate Contribution Snake
 
 on:
   schedule:
-    - cron: "0 0 * * *"    # Runs daily at midnight UTC — perfect since contributions update daily
-  workflow_dispatch:         # Manual trigger from the Actions tab anytime
+    - cron: "0 0 * * *"    # Daily at midnight UTC
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -64,3 +64,23 @@ jobs:
           commit_message: "chore: regenerate contribution snake 🐍"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🕐 Update README cache-busting timestamp
+        run: |
+          NOW=$(date +%s)
+          echo "Timestamp: $NOW"
+
+          # Update ?t= param on both snake URLs in README
+          sed -i -E "s|(github-snake\.svg)(\?t=[0-9]+)?|\1?t=$NOW|g" README.md
+          sed -i -E "s|(github-snake-dark\.svg)(\?t=[0-9]+)?|\1?t=$NOW|g" README.md
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md
+
+          if git diff --staged --quiet; then
+            echo "No README changes, skipping commit."
+          else
+            git commit -m "chore: bust snake cache [t=$NOW]"
+            git push origin main
+          fi
