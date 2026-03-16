@@ -1,4 +1,4 @@
-name: 🐍 Generate Contribution Snake
+name: 🐍 Contribution Snake
 
 on:
   schedule:
@@ -70,9 +70,11 @@ jobs:
           NOW=$(date +%s)
           echo "Timestamp: $NOW"
 
-          # Update ?t= param on both snake URLs in README
-          sed -i -E "s|(github-snake\.svg)(\?t=[0-9]+)?|\1?t=$NOW|g" README.md
-          sed -i -E "s|(github-snake-dark\.svg)(\?t=[0-9]+)?|\1?t=$NOW|g" README.md
+          # Dark first (must come before light — snake.svg is a substring of snake-dark.svg)
+          # Strips ALL existing query strings (?t=, ?time=, &t=, stacked params, etc.)
+          # then replaces with a clean ?t=NOW
+          sed -i -E "s|(github-snake-dark\.svg)[^\"']*|\1?t=$NOW|g" README.md
+          sed -i -E "s|(github-snake\.svg)[^\"']*|\1?t=$NOW|g" README.md
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
