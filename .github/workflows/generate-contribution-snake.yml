@@ -73,17 +73,21 @@ jobs:
           echo "Timestamp : $NOW"
           echo "Username  : $USERNAME"
 
-          # Choose your preferred variant:
-          # github-snake.svg       → light theme
-          # github-snake-dark.svg  → dark theme
-          IMG_URL="https://raw.githubusercontent.com/$USERNAME/$USERNAME/output/github-snake-dark.svg?t=$NOW"
+          BASE_URL="https://raw.githubusercontent.com/$USERNAME/$USERNAME/output"
 
-          SNAKE_BLOCK="## 🐍 Contribution Snake\n\n![GitHub contribution snake animation]($IMG_URL)"
+          LIGHT_URL="$BASE_URL/github-snake.svg?t=$NOW"
+          DARK_URL="$BASE_URL/github-snake-dark.svg?t=$NOW"
+
+          # Proper <picture> tag — dark mode gets dark SVG, light mode gets light SVG
+          SNAKE_BLOCK='<picture>\n  <source media="(prefers-color-scheme: dark)" srcset="'"$DARK_URL"'" />\n  <source media="(prefers-color-scheme: light)" srcset="'"$LIGHT_URL"'" />\n  <img alt="GitHub contribution snake animation" src="'"$LIGHT_URL"'" />\n</picture>'
 
           if grep -q "github-snake" README.md; then
-            perl -i -0777 -pe "s|## 🐍 Contribution Snake.*?\n\n!\[.*?\]\(.*?\)|$SNAKE_BLOCK|gs" README.md
+            # Replace the existing <picture> block
+            perl -i -0777 -pe 's|<picture>.*?</picture>|'"$SNAKE_BLOCK"'|gs' README.md
           else
-            printf "\n\n$SNAKE_BLOCK" >> README.md
+            # Prepend to the very top of README
+            CURRENT=$(cat README.md)
+            printf "$SNAKE_BLOCK\n\n$CURRENT" > README.md
           fi
 
           git config user.name "github-actions[bot]"
@@ -93,6 +97,6 @@ jobs:
           if git diff --staged --quiet; then
             echo "No README changes, skipping commit."
           else
-            git commit -m "chore: update snake block and bust cache [t=$NOW]"
+            git commit -m "chore: update snake and bust cache [t=$NOW]"
             git push origin main
           fi
