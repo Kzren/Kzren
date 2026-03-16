@@ -83,10 +83,12 @@ jobs:
           light = f"{base}/github-snake.svg?t={now}"
           dark  = f"{base}/github-snake-dark.svg?t={now}"
 
+          # Single <picture> block — auto switches dark/light via browser preference
           block = (
               '<picture>\n'
               f'  <source media="(prefers-color-scheme: dark)" srcset="{dark}" />\n'
               f'  <source media="(prefers-color-scheme: light)" srcset="{light}" />\n'
+              f'  <img alt="GitHub contribution snake animation" src="{light}" />\n'
               '</picture>'
           )
 
