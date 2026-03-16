@@ -1,91 +1,46 @@
-generate-snake
-
-
+name: generate-snake
 
 on:
-
   schedule:
-
     # Runs every 12 hours (10 AM and 10 PM in UTC+10)
-
     - cron: "0 */12 * * *"
-
   
-
   # Allows manual triggers
-
   workflow_dispatch:
-
   
-
   # Run on every push to the main branch
-
   push:
-
     branches:
-
       - main
 
-
-
 jobs:
-
   generate:
-
     permissions: 
-
       contents: write
-
     runs-on: ubuntu-latest
-
     timeout-minutes: 5
-
     
-
     # Ensures compatibility with the latest Node runtimes
-
     env:
-
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
     
-
     steps:
-
       # Generates the snake animations from the contribution graph
-
       - name: generate-snake
-
         uses: Platane/snk/svg-only@v3
-
         with:
-
           github_user_name: ${{ github.repository_owner }}
-
           outputs: |
-
             dist/github-snake.svg
-
             dist/github-snake-dark.svg?palette=github-dark
-
         env:
-
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-
-
       # Pushes the generated files to the 'output' branch
-
       - name: push to output branch
-
         uses: crazy-max/ghaction-github-pages@v5
-
         with:
-
           target_branch: output
-
           build_dir: dist
-
         env:
-
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
