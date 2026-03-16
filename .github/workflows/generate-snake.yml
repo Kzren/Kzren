@@ -1,34 +1,33 @@
-name: generate-snake
+name: 🐍 Contribution Snake
 
 on:
   schedule:
-    # Runs every 30 minutes
-    - cron: "*/30 * * *"
-  workflow_dispatch:
+    - cron: "0 0 * * *"    # Runs daily at midnight UTC — perfect since contributions update daily
+  workflow_dispatch:         # Manual trigger from the Actions tab anytime
   push:
     branches:
       - main
 
+concurrency:
+  group: contribution-snake
+  cancel-in-progress: true
+
 jobs:
-  generate:
-    permissions: 
-      contents: write
+  generate-snake:
+    name: Generate Contribution Snake
     runs-on: ubuntu-latest
-    timeout-minutes: 5
-    
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-    
+    timeout-minutes: 10
+
+    permissions:
+      contents: write
+
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Get current time
-        run: echo "NOW=$(date +%s)" >> $GITHUB_ENV
-
-      - name: generate-snake
+      - name: 🐍 Generate snake SVGs from contribution graph
         uses: Platane/snk/svg-only@v3
         with:
           github_user_name: ${{ github.repository_owner }}
@@ -38,29 +37,30 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update README with new timestamp
+      - name: ✅ Verify SVGs were generated
         run: |
-          # Finds the snake URLs and updates the ?time= parameter
-          sed -i "s|github-snake-dark.svg\(\?time=[0-9]*\)\?|github-snake-dark.svg?time=${{ env.NOW }}|g" README.md
-          sed -i "s|github-snake.svg\(\?time=[0-9]*\)\?|github-snake.svg?time=${{ env.NOW }}|g" README.md
-          
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add README.md
-          
-          # Only commits and pushes if the file actually changed
-          if git diff --staged --quiet; then
-            echo "No changes to README"
-          else
-            git commit -m "docs: update snake timestamp to ${{ env.NOW }}"
-            git push origin main
+          echo "── Generated files ──────────────────────────"
+          ls -lh dist/
+          echo "─────────────────────────────────────────────"
+
+          if [[ ! -f dist/github-snake.svg ]]; then
+            echo "❌ ERROR: github-snake.svg not found"
+            exit 1
           fi
 
-      - name: push to output branch
-        uses: crazy-max/ghaction-github-pages@v5
+          if [[ ! -f dist/github-snake-dark.svg ]]; then
+            echo "❌ ERROR: github-snake-dark.svg not found"
+            exit 1
+          fi
+
+          echo "✅ Both SVGs generated successfully"
+
+      - name: 🚀 Deploy SVGs to output branch
+        uses: crazy-max/ghaction-github-pages@v4
         with:
           target_branch: output
           build_dir: dist
-          commit_message: "Update snake animations - Unix: ${{ env.NOW }}"
+          keep_history: true
+          commit_message: "chore: regenerate contribution snake 🐍"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
