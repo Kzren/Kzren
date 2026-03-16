@@ -2,7 +2,7 @@ name: Generate Contribution Snake
 
 on:
   schedule:
-    - cron: "0 0 * * *"    # Daily at midnight UTC
+    - cron: "0 0 * * *"
   workflow_dispatch:
   push:
     branches:
@@ -65,33 +65,25 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 🕐 Update README with username and cache-busting timestamp
+      - name: 🕐 Update README with cache-busting timestamp
         env:
           USERNAME: ${{ github.repository_owner }}
-          REPO: ${{ github.repository }}
         run: |
           NOW=$(date +%s)
           echo "Timestamp : $NOW"
           echo "Username  : $USERNAME"
-          echo "Repo      : $REPO"
 
-          BASE_URL="https://raw.githubusercontent.com/$USERNAME/$USERNAME/output"
+          # Choose your preferred variant:
+          # github-snake.svg       → light theme
+          # github-snake-dark.svg  → dark theme
+          IMG_URL="https://raw.githubusercontent.com/$USERNAME/$USERNAME/output/github-snake-dark.svg?t=$NOW"
 
-          DARK_URL="$BASE_URL/github-snake-dark.svg?t=$NOW"
-          LIGHT_URL="$BASE_URL/github-snake.svg?t=$NOW"
+          SNAKE_BLOCK="## 🐍 Contribution Snake\n\n![GitHub contribution snake animation]($IMG_URL)"
 
-          # Build the full picture block
-          SNAKE_BLOCK="## 🐍 Contribution Snake\n\n<picture>\n  <source media=\"(prefers-color-scheme: dark)\"  srcset=\"$DARK_URL\" />\n  <source media=\"(prefers-color-scheme: light)\" srcset=\"$LIGHT_URL\" />\n  <img alt=\"GitHub contribution snake animation\" src=\"$LIGHT_URL\" />\n</picture>"
-
-          # If the snake block already exists in README, replace it entirely
-          # If it doesn't exist, append it to the end
           if grep -q "github-snake" README.md; then
-            # Replace everything between the snake heading and closing </picture> tag
-            perl -i -0777 -pe "s|## 🐍 Contribution Snake.*?</picture>|$SNAKE_BLOCK|gs" README.md
+            perl -i -0777 -pe "s|## 🐍 Contribution Snake.*?\n\n!\[.*?\]\(.*?\)|$SNAKE_BLOCK|gs" README.md
           else
-            echo "" >> README.md
-            echo "" >> README.md
-            printf "$SNAKE_BLOCK" >> README.md
+            printf "\n\n$SNAKE_BLOCK" >> README.md
           fi
 
           git config user.name "github-actions[bot]"
