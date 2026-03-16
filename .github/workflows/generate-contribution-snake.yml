@@ -1,4 +1,4 @@
-name: 🐍 Contribution Snake
+name: Generate Contribution Snake
 
 on:
   schedule:
@@ -65,16 +65,34 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 🕐 Update README cache-busting timestamp
+      - name: 🕐 Update README with username and cache-busting timestamp
+        env:
+          USERNAME: ${{ github.repository_owner }}
+          REPO: ${{ github.repository }}
         run: |
           NOW=$(date +%s)
-          echo "Timestamp: $NOW"
+          echo "Timestamp : $NOW"
+          echo "Username  : $USERNAME"
+          echo "Repo      : $REPO"
 
-          # Dark first (must come before light — snake.svg is a substring of snake-dark.svg)
-          # Strips ALL existing query strings (?t=, ?time=, &t=, stacked params, etc.)
-          # then replaces with a clean ?t=NOW
-          sed -i -E "s|(github-snake-dark\.svg)[^\"']*|\1?t=$NOW|g" README.md
-          sed -i -E "s|(github-snake\.svg)[^\"']*|\1?t=$NOW|g" README.md
+          BASE_URL="https://raw.githubusercontent.com/$USERNAME/$USERNAME/output"
+
+          DARK_URL="$BASE_URL/github-snake-dark.svg?t=$NOW"
+          LIGHT_URL="$BASE_URL/github-snake.svg?t=$NOW"
+
+          # Build the full picture block
+          SNAKE_BLOCK="## 🐍 Contribution Snake\n\n<picture>\n  <source media=\"(prefers-color-scheme: dark)\"  srcset=\"$DARK_URL\" />\n  <source media=\"(prefers-color-scheme: light)\" srcset=\"$LIGHT_URL\" />\n  <img alt=\"GitHub contribution snake animation\" src=\"$LIGHT_URL\" />\n</picture>"
+
+          # If the snake block already exists in README, replace it entirely
+          # If it doesn't exist, append it to the end
+          if grep -q "github-snake" README.md; then
+            # Replace everything between the snake heading and closing </picture> tag
+            perl -i -0777 -pe "s|## 🐍 Contribution Snake.*?</picture>|$SNAKE_BLOCK|gs" README.md
+          else
+            echo "" >> README.md
+            echo "" >> README.md
+            printf "$SNAKE_BLOCK" >> README.md
+          fi
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -83,6 +101,6 @@ jobs:
           if git diff --staged --quiet; then
             echo "No README changes, skipping commit."
           else
-            git commit -m "chore: bust snake cache [t=$NOW]"
+            git commit -m "chore: update snake block and bust cache [t=$NOW]"
             git push origin main
           fi
