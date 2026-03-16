@@ -83,35 +83,34 @@ jobs:
           light = f"{base}/github-snake.svg?t={now}"
           dark  = f"{base}/github-snake-dark.svg?t={now}"
 
-          block = f"""<picture>
-            <source media="(prefers-color-scheme: dark)" srcset="{dark}" />
-            <source media="(prefers-color-scheme: light)" srcset="{light}" />
-            <img alt="GitHub contribution snake animation" src="{light}" />
-          </picture>"""
+          # Single <picture> block — auto switches dark/light via browser preference
+          block = (
+              '<picture>\n'
+              f'  <source media="(prefers-color-scheme: dark)" srcset="{dark}" />\n'
+              f'  <source media="(prefers-color-scheme: light)" srcset="{light}" />\n'
+              f'  <img alt="GitHub contribution snake animation" src="{light}" />\n'
+              '</picture>'
+          )
 
           readme_path = "README.md"
 
-          # Read existing README or start fresh
           if os.path.exists(readme_path):
               with open(readme_path, "r", encoding="utf-8") as f:
                   content = f.read()
           else:
               content = ""
 
-          # Replace existing picture block if present, otherwise prepend
-          pattern = re.compile(r"<picture>.*?</picture>", re.DOTALL)
+          # Remove ALL existing picture blocks first to prevent duplication
+          pattern = re.compile(r"<picture>.*?</picture>\n?", re.DOTALL)
+          content = pattern.sub("", content).lstrip("\n")
 
-          if pattern.search(content):
-              updated = pattern.sub(block, content)
-              print(f"✅ Replaced existing snake block with t={now}")
-          else:
-              updated = block + "\n\n" + content
-              print(f"✅ Prepended new snake block with t={now}")
+          # Always prepend the single fresh block at the top
+          updated = block + "\n\n" + content
 
           with open(readme_path, "w", encoding="utf-8") as f:
               f.write(updated)
 
-          print("✅ README.md written successfully")
+          print(f"✅ README.md updated with single snake block [t={now}]")
           EOF
 
       - name: 📝 Commit README changes
