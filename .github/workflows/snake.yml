@@ -2,13 +2,8 @@ name: generate-snake
 
 on:
   schedule:
-    # Runs every 12 hours (10 AM and 10 PM in UTC+10)
     - cron: "0 */12 * * *"
-  
-  # Allows manual triggers
   workflow_dispatch:
-  
-  # Run on every push to the main branch
   push:
     branches:
       - main
@@ -20,12 +15,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     
-    # Ensures compatibility with the latest Node runtimes
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     
     steps:
-      # Generates the snake animations from the contribution graph
+      # 1. Get the current Unix timestamp
+      - name: Get current time
+        id: date
+        run: echo "TIMESTAMP=$(date +%s)" >> $GITHUB_ENV
+
+      # 2. Generates the snake
       - name: generate-snake
         uses: Platane/snk/svg-only@v3
         with:
@@ -36,11 +35,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Pushes the generated files to the 'output' branch
+      # 3. Optional: Rename files to include the timestamp
+      # This will result in files like github-snake-1710654875.svg
+      - name: Rename files with timestamp
+        run: |
+          mv dist/github-snake.svg dist/github-snake-${{ env.TIMESTAMP }}.svg
+          mv dist/github-snake-dark.svg dist/github-snake-dark-${{ env.TIMESTAMP }}.svg
+
+      # 4. Push to output branch with the timestamp in the commit message
       - name: push to output branch
         uses: crazy-max/ghaction-github-pages@v5
         with:
           target_branch: output
           build_dir: dist
+          commit_message: "Update snake animations - Unix: ${{ env.TIMESTAMP }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
