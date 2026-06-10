@@ -1,6 +1,6 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/MrLiPx/MrLiPx/output/github-snake-dark.svg?t=1780977109" />
-  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/MrLiPx/MrLiPx/output/github-snake.svg?t=1780977109" />
-  <img alt="GitHub contribution snake animation" src="https://raw.githubusercontent.com/MrLiPx/MrLiPx/output/github-snake.svg?t=1780977109" />
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/MrLiPx/MrLiPx/output/github-snake-dark.svg?t=1781064172" />
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/MrLiPx/MrLiPx/output/github-snake.svg?t=1781064172" />
+  <img alt="GitHub contribution snake animation" src="https://raw.githubusercontent.com/MrLiPx/MrLiPx/output/github-snake.svg?t=1781064172" />
 </picture>
 
