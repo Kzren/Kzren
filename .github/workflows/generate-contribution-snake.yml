@@ -66,8 +66,8 @@ jobs:
           username = os.environ["USERNAME"]
           h = secrets.token_hex(5)
           base = f"https://raw.githubusercontent.com/{username}/{username}/output"
-          light = f"{base}/contribution-snake-light.svg?hash={h}"
-          dark  = f"{base}/contribution-snake-dark.svg?hash={h}"
+          light = f"{base}/contribution-snake-light.svg?{h}"
+          dark  = f"{base}/contribution-snake-dark.svg?{h}"
           block = (
               '<picture>\n'
               f'  <source media="(prefers-color-scheme: dark)" srcset="{dark}" />\n'
