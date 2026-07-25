@@ -64,7 +64,7 @@ jobs:
           import re
           import secrets
           username = os.environ["USERNAME"]
-          h = secrets.token_hex(5)
+          h = secrets.token_hex(4)
           base = f"https://raw.githubusercontent.com/{username}/{username}/output"
           light = f"{base}/contribution-snake-light.svg?{h}"
           dark  = f"{base}/contribution-snake-dark.svg?{h}"
