@@ -1,5 +1,4 @@
 name: Generate Contribution Snake
-
 on:
   schedule:
     - cron: "0 0 * * *"
@@ -7,57 +6,46 @@ on:
   push:
     branches:
       - main
-
 concurrency:
   group: contribution-snake
   cancel-in-progress: true
-
 jobs:
   generate-snake:
     name: Generate Contribution Snake
     runs-on: ubuntu-latest
     timeout-minutes: 10
-
     permissions:
       contents: write
-
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
     steps:
       - name: 📥 Checkout repository
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-
       - name: 🐍 Generate snake SVGs from contribution graph
         uses: Platane/snk/svg-only@v3
         with:
           github_user_name: ${{ github.repository_owner }}
           outputs: |
-            dist/github-snake.svg
-            dist/github-snake-dark.svg?palette=github-dark
+            dist/contribution-snake-light.svg
+            dist/contribution-snake-dark.svg?palette=github-dark
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: ✅ Verify SVGs were generated
         run: |
           echo "── Generated files ──────────────────────────"
           ls -lh dist/
           echo "─────────────────────────────────────────────"
-
-          if [[ ! -f dist/github-snake.svg ]]; then
-            echo "❌ ERROR: github-snake.svg not found"
+          if [[ ! -f dist/contribution-snake-light.svg ]]; then
+            echo "❌ ERROR: contribution-snake-light.svg not found"
             exit 1
           fi
-
-          if [[ ! -f dist/github-snake-dark.svg ]]; then
-            echo "❌ ERROR: github-snake-dark.svg not found"
+          if [[ ! -f dist/contribution-snake-dark.svg ]]; then
+            echo "❌ ERROR: contribution-snake-dark.svg not found"
             exit 1
           fi
-
           echo "✅ Both SVGs generated successfully"
-
       - name: 🚀 Deploy SVGs to output branch
         uses: crazy-max/ghaction-github-pages@v5
         with:
@@ -67,23 +55,19 @@ jobs:
           commit_message: "chore: regenerate contribution snake 🐍"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: 🕐 Update README with cache-busting timestamp
+      - name: 🕐 Update README with cache-busting hash
         env:
           USERNAME: ${{ github.repository_owner }}
         run: |
           python3 << 'EOF'
           import os
           import re
-          import time
-
+          import secrets
           username = os.environ["USERNAME"]
-          now = int(time.time())
+          h = secrets.token_hex(5)
           base = f"https://raw.githubusercontent.com/{username}/{username}/output"
-          light = f"{base}/github-snake.svg?t={now}"
-          dark  = f"{base}/github-snake-dark.svg?t={now}"
-
-          # Single <picture> block — auto switches dark/light via browser preference
+          light = f"{base}/contribution-snake-light.svg?hash={h}"
+          dark  = f"{base}/contribution-snake-dark.svg?hash={h}"
           block = (
               '<picture>\n'
               f'  <source media="(prefers-color-scheme: dark)" srcset="{dark}" />\n'
@@ -91,37 +75,27 @@ jobs:
               f'  <img alt="GitHub contribution snake animation" src="{light}" />\n'
               '</picture>'
           )
-
           readme_path = "README.md"
-
           if os.path.exists(readme_path):
               with open(readme_path, "r", encoding="utf-8") as f:
                   content = f.read()
           else:
               content = ""
-
-          # Remove ALL existing picture blocks first to prevent duplication
           pattern = re.compile(r"<picture>.*?</picture>\n?", re.DOTALL)
           content = pattern.sub("", content).lstrip("\n")
-
-          # Always prepend the single fresh block at the top
           updated = block + "\n\n" + content
-
           with open(readme_path, "w", encoding="utf-8") as f:
               f.write(updated)
-
-          print(f"✅ README.md updated with single snake block [t={now}]")
+          print(f"✅ README.md updated with single snake block [hash={h}]")
           EOF
-
       - name: 📝 Commit README changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add README.md
-
           if git diff --staged --quiet; then
             echo "No README changes, skipping commit."
           else
-            git commit -m "chore: update snake and bust cache [t=$(date +%s)]"
+            git commit -m "chore: update snake and bust cache [skip ci]"
             git push origin main
           fi
