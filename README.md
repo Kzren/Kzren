@@ -1,6 +1,6 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Kzren/Kzren/output/contribution-snake-dark.svg?ac79557d" />
-  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Kzren/Kzren/output/contribution-snake-light.svg?ac79557d" />
-  <img alt="GitHub contribution snake animation" src="https://raw.githubusercontent.com/Kzren/Kzren/output/contribution-snake-light.svg?ac79557d" />
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Kzren/Kzren/output/contribution-snake-dark.svg?59580385" />
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Kzren/Kzren/output/contribution-snake-light.svg?59580385" />
+  <img alt="GitHub contribution snake animation" src="https://raw.githubusercontent.com/Kzren/Kzren/output/contribution-snake-light.svg?59580385" />
 </picture>
 
